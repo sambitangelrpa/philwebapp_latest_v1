@@ -1,0 +1,12 @@
+.idea
+model/
+
+
+wordcloud/
+test.py
+Diagram for Summary Generation WebApp.pptx
+sambit_accessKeys.csv
+summary-test-key.pem
+image_ref.jpeg
+ec2 instance.xlsx
+ec2-user@ec2-54-210-88-19.compute-1.amazonaws.com
