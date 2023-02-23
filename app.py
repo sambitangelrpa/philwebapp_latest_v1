@@ -4,7 +4,7 @@ from flask.wrappers import Response
 from flask.globals import request, session
 import requests
 from flask_cors import CORS
-from send_s3_link import send_s3_function
+from S3.send_s3_link import send_s3_function
 import os
 
 
