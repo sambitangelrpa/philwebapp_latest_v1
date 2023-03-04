@@ -1,6 +1,6 @@
 from common.word_cloud import Word_cloud_generation
-import pandas as pd
-import os
+
+
 class ecb_word_cloud:
     """
              This is a class named ecb_word_cloud. It has a method named run_ecb_wordcloud.
@@ -37,8 +37,12 @@ class ecb_word_cloud:
             wordcloud_obj=Word_cloud_generation(self.path,bank='ecb')
             wordcloud_obj.word_cloud()
 
-        except Exception as e:
-            print(e)
+
+        except FileNotFoundError as err:
+
+            self.logger.error(f'FileNotFoundError: : file {self.path} not found in run_ecb_wordcloud method in ecb_word_cloud.py {err}')
+
+
 
 
 if __name__=='__main__':

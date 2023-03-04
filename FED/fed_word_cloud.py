@@ -1,4 +1,6 @@
 from common.word_cloud import Word_cloud_generation
+from log_exception.log_exception import Log_Exception
+
 
 class fed_word_cloud:
     """
@@ -25,10 +27,20 @@ class fed_word_cloud:
                 Version: 1.0
                 Revisions: None
 
-                                                                """
-        self.path='./summary_prediction/ALL_FED_SPEECH_SUMMARY_DATA.xlsx'
-        wordcloud_obj=Word_cloud_generation(self.path,bank='fed')
-        wordcloud_obj.word_cloud()
+        """
+        try:
+            logfile_obj = Log_Exception()
+            self.logger = logfile_obj.save_exception()
+
+            self.path='../test_files/fed_test_key_error.xlsx'
+            # self.path = './summary_prediction/ALL_FED_.xlsx'
+            wordcloud_obj=Word_cloud_generation(self.path,bank='fed')
+            wordcloud_obj.word_cloud()
+        except FileNotFoundError as err:
+            self.logger.error(f'FileNotFoundError: : file {self.path} not found in run_fed_wordcloud method in fed_word_cloud.py {err}')
+
+
+
 
 
 if __name__=='__main__':

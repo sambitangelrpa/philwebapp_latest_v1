@@ -1,17 +1,13 @@
-from common.run_selenium import Selenium_Run
-import pandas as pd
-import time
+
 from selenium.webdriver.support import expected_conditions as EC
 from common.run_selenium import Selenium_Run
-from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
+from log_exception.log_exception import Log_Exception
 import requests
-import os
-import pypdfium2 as pdfium
-import numpy as np
+from selenium.common.exceptions import InvalidSelectorException
+from selenium.common.exceptions import TimeoutException,ElementNotInteractableException
+
 
 class Ecb_Scraping:
     """
@@ -42,17 +38,28 @@ class Ecb_Scraping:
 
                                         """
         try:
-
+            logfile_obj = Log_Exception()
+            self.logger = logfile_obj.save_exception()
             link = [i.get_attribute("href") for i in WebDriverWait(self.driver, 7).until(
                 EC.presence_of_all_elements_located((By.XPATH, '//*[@id="main-wrapper"]/main/div[2]/p[3]/a')))]
-            print(link)
-            import requests
+
+
             with open("../Scraped_Data/ECB_SpeechData.csv", 'wb') as f, \
                     requests.get(link[0], stream=True) as r:
                 for line in r.iter_lines():
                     f.write(line + '\n'.encode())
-        except Exception as e:
-            print(e)
+        except OSError as err:
+            self.logger.error(f'OSError: : Could not open/read file in download_csv in Ecb_csv_Download.py file {err}')
+        except IOError as err:
+            self.logger.error(f'IOError: : Could not read file in download_csv method in Ecb_csv_Download.py file {err}')
+        except InvalidSelectorException as err:
+            self.logger.error(f'InvalidSelectorException: : Unable to locate an element with the xpath expression to Xpath is wrong for download csv '
+                              f'path in download_csv method in Ecb_csv_Download.py file {err}')
+        except ElementNotInteractableException as err:
+            self.logger.error(
+                f'InvalidSelectorException: : Unable to locate an element with the xpath expression to Xpath is wrong for download csv '
+                f'path in download_csv method in Ecb_csv_Download.py file {err}')
+
 
 
 

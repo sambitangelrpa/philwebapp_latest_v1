@@ -32,8 +32,9 @@ class boe_word_cloud:
             self.path='../summary_prediction/ALL_BOE_SPEECH_SUMMARY_DATA.xlsx'
             wordcloud_obj=Word_cloud_generation(self.path,bank='boe')
             wordcloud_obj.word_cloud()
-        except Exception as e:
-            print(e)
+        except FileNotFoundError as err:
+
+            self.logger.error(f'FileNotFoundError: : file {self.path} not found in run_ecb_wordcloud method in boe_word_cloud.py {err}')
 
 
 if __name__=='__main__':

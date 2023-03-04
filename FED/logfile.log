@@ -1,0 +1,17 @@
+2023-02-25 22:24:11,052 - __main__ - ERROR - An error occurred: [Errno 2] No such file or directory: 'dsas'
+Traceback (most recent call last):
+  File "C:\Users\HP\PycharmProjects\philWebApp\FED\Fed_Scraping_Automation.py", line 61, in run_fed_scraping
+    fed_data = pd.read_excel(self.filename)
+  File "C:\anaconda\envs\philWebApp\lib\site-packages\pandas\util\_decorators.py", line 211, in wrapper
+    return func(*args, **kwargs)
+  File "C:\anaconda\envs\philWebApp\lib\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+  File "C:\anaconda\envs\philWebApp\lib\site-packages\pandas\io\excel\_base.py", line 482, in read_excel
+    io = ExcelFile(io, storage_options=storage_options, engine=engine)
+  File "C:\anaconda\envs\philWebApp\lib\site-packages\pandas\io\excel\_base.py", line 1652, in __init__
+    ext = inspect_excel_format(
+  File "C:\anaconda\envs\philWebApp\lib\site-packages\pandas\io\excel\_base.py", line 1525, in inspect_excel_format
+    with get_handle(
+  File "C:\anaconda\envs\philWebApp\lib\site-packages\pandas\io\common.py", line 865, in get_handle
+    handle = open(handle, ioargs.mode)
+FileNotFoundError: [Errno 2] No such file or directory: 'dsas'

@@ -1,8 +1,8 @@
-import os
-
 import pandas as pd
 from common.prediction import model_prediction
 from common.cleaning_summary import Prediction_Summary_Cleaning
+from log_exception.log_exception import Log_Exception
+
 
 class boe_Summary_Prediction:
     """
@@ -35,15 +35,31 @@ class boe_Summary_Prediction:
 
                                                                """
         try:
+            logfile_obj = Log_Exception()
+            self.logger = logfile_obj.save_exception()
 
             self.boe_summary_data= pd.read_excel(self.boe_summarydata_path)
             self.boe_scrape_data = pd.read_excel(self.boe_scrapedata_path)
 
+            if 'date' not in self.boe_summary_data.columns:
+                self.logger.error("The 'date' column is missing in boe_summary_data dataframe in summary_prediction "
+                                  "method in Boe_summary_prediction file.py ")
+            if 'date' not in self.boe_scrape_data.columns:
+                self.logger.error("The 'date' column is missing in boe_scrape_data dataframe in summary_prediction "
+                                  "method in Boe_summary_prediction file.py ")
 
+            if len(self.boe_summary_data['date']) > 0:
+                latest_date = self.boe_summary_data['date'][0]
+            else:
+                self.logger.error("No value in date column in the ALL_BOE_SPEECH_SUMMARY_DATA.xlsx file")
 
-            latest_date = self.boe_summary_data['date'][0]
-            df = self.boe_scrape_data[self.boe_scrape_data['date'] > latest_date]
-            if df.shape[0]!=0:
+            if self.boe_scrape_data.shape[0] > 0:
+
+                df = self.boe_scrape_data[self.boe_scrape_data['date'] > latest_date]
+            else:
+                self.logger.error("No data in BOE_SpeechData.xlsx file")
+
+            if df.shape[0] > 0:
 
 
                 model_prediction_obj=model_prediction()
@@ -61,10 +77,14 @@ class boe_Summary_Prediction:
                 appended_boe_data.to_excel(self.filename,encoding='ascii',index=False)
             else:
                 print('ALL_BOE_SPEECH_SUMMARY_DATA.xlsx sheet is upto date!!')
-        except Exception as e:
-            print(e)
-
-
+        except FileNotFoundError as err:
+            self.logger.error(f'FileNotFoundError: : {self.filename} not found in summary_prediction in Ecb_summary_prediction.py {err}')
+        except ValueError as err:
+            self.logger.error(f'ValueError: : Unable to convert the date strings  to a datetime format in summary_prediction method in Boe_summary_prediction file.py {err}')
+        except pd.errors.MergeError as err:
+            self.logger.error(f"pd.errors.MergeError: :An error occurred while merging the DataFrames in summary_prediction method in Boe_summary_prediction file.py  {err}")
+        except PermissionError as err:
+            self.logger.error(f'PermissionError: : Unable to write the DataFrame to the Excel file due to permission error! in summary_prediction method in Boe_summary_prediction file.py {err}')
 
 if __name__=='__main__':
     obj=boe_Summary_Prediction()

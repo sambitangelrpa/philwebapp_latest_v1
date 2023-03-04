@@ -1,14 +1,13 @@
-from common.run_selenium import Selenium_Run
 import pandas as pd
 import time
 from selenium.webdriver.support import expected_conditions as EC
 from common.run_selenium import Selenium_Run
-from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import os
+from selenium.common.exceptions import TimeoutException,ElementNotInteractableException
+from log_exception.log_exception import Log_Exception
 
 
 class Fed_Scraping:
@@ -23,12 +22,12 @@ class Fed_Scraping:
                      """
 
     def __init__(self):
-        self.fed_weblink="https://www.federalreserve.gov/newsevents/speeches.htm"
+        self.fed_weblink = "https://www.federalreserve.gov/newsevents/speeches.htm"
         selenium_obj = Selenium_Run(self.fed_weblink)
-        self.driver=selenium_obj.run_Fed_driver_chrome()
-        self.filename= "../Scraped_Data/fed_SpeechData.xlsx"
-        
-        
+        self.driver = selenium_obj.run_Fed_driver_chrome()
+        self.filename = "../Scraped_Data/fed_SpeechData.xlsx"
+
+
     def run_fed_scraping(self):
         """
             Method Name: run_fed_scraping
@@ -42,12 +41,19 @@ class Fed_Scraping:
 
                                                         """
         try:
+            logfile_obj = Log_Exception()
+            self.logger = logfile_obj.save_exception()
 
             fed_data = pd.read_excel(self.filename)
 
+            if 'date' not in fed_data.columns:
+                self.logger.error("The 'date' column is missing in fed_SpeechData.xlsx dataframe in run_fed_scraping method in Fed_Scraping_Automation file.py ")
             fed_data['date'] = pd.to_datetime(fed_data['date'])
-            last_date = fed_data['date'][0].date()
 
+            if len(fed_data['date']) > 0:
+                last_date = fed_data['date'][0].date()
+            else:
+                self.logger.error("No Data in date column in fed_SpeechData.xlsx in Fed_Scraping_Automation file.py ")
 
 
             df1 = pd.DataFrame(columns=["date", "link", "speaker", "title"])
@@ -75,8 +81,7 @@ class Fed_Scraping:
                     df1.loc[len(df1.index)] = [date, links, title, speaker_name]
                 action.move_to_element(last_page).click().perform()
 
-
-            df1['date']=pd.to_datetime(df1['date'])
+            df1['date'] = pd.to_datetime(df1['date'])
             df2 = pd.DataFrame()
             for date, link, title, speaker_name in zip(df1['date'], df1['link'], df1['title'], df1['speaker']):
                 # print(date.date())
@@ -98,7 +103,9 @@ class Fed_Scraping:
                         whl_txt = "na"
                     # print('before',df2.head())
 
-                    df2.loc[len(df2.index), ['date', 'link', 'title', 'speaker', 'WHOLE_TEXT']]=[date.date(),link,title,speaker_name,whl_txt]
+                    df2.loc[len(df2.index), ['date', 'link', 'title', 'speaker', 'WHOLE_TEXT']] = [date.date(), link,
+                                                                                                   title, speaker_name,
+                                                                                                   whl_txt]
 
 
 
@@ -110,13 +117,44 @@ class Fed_Scraping:
             fed_data['date'] = fed_data['date'].dt.date
             fed_data = pd.concat([df2, fed_data], axis=0, ignore_index=True)
 
-
             # Write the DataFrame to the Excel file
-            fed_data.to_excel(self.filename,encoding='ascii',index=False)
-        except Exception as e:
-            print(e)
+            fed_data.to_excel(self.filename, encoding='ascii', index=False)
+        except FileNotFoundError as err:
+            self.logger.error(f'FileNotFoundError: : In run_fed_scraping {self.filename} not found {err}')
+            # raise FileNotFoundError
+        except TimeoutException as err:
+            self.logger.error(f'TimeoutException: : In run_fed_scraping method unable to fetch webelement in selenim '
+                              f'for Federal Reserve Bank. {err}')
+            # raise TimeoutException
+        except ElementNotInteractableException as err:
+            self.logger.error(f'ElementNotInteractableException: : In run_fed_scraping method unable to fetch '
+                              f'web element in selenium for Federal Reserve Bank. {err}')
 
 
-if __name__=='__main__':
-    obj=Fed_Scraping()
+        except KeyError as err:
+            self.logger.error(f'KeyError: : In run_fed_scraping method unable to fetch the key {err} as column.')
+
+        except ValueError as err:
+            self.logger.error(f'ValueError: :Format specified in the pd.to_datetime() method does not match the date '
+                              f'format in the data or There is an invalid value in the DataFrame in run_fed_scraping '
+                              f'method '
+                              f'while saving the fed_data dataframe to excel: :{err}.')
+
+        except OSError as err:
+            self.logger.error(f'OSError: :There is an error while writing the dataframe to the Excel file '
+                              f'operation in run_fed_scraping method '
+                              f'while saving the fed_data dataframe to excel: :{err}.')
+
+        except PermissionError as err:
+            self.logger.error(f'PermissionError: : Unable to write the DataFrame to the Excel file due to permission error! in run_fed_scraping method {err}')
+        except pd.errors.MergeError as err:
+            print(f"pd.errors.MergeError: An error occurred while merging the DataFrames in summary_prediction method "
+                  f"in run_fed_scraping method {err}")
+
+
+
+
+if __name__ == '__main__':
+    print(os.getcwd())
+    obj = Fed_Scraping()
     obj.run_fed_scraping()

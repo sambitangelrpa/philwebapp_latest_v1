@@ -3,6 +3,7 @@ import pandas as pd
 from wordcloud import  WordCloud, STOPWORDS, ImageColorGenerator
 import matplotlib.pyplot as plt
 import os
+from log_exception.log_exception import Log_Exception
 
 class Word_cloud_generation:
     """
@@ -13,18 +14,13 @@ class Word_cloud_generation:
 
                                      """
     def __init__(self,path,bank):
-        self.data = pd.read_excel(path)
 
-        self.data['date'] = self.data['date'].dt.date
-        self.bank=bank
-        self.bank_dict={'fed':0,'ecb':1,'boe':2}
-        self.folder_dict={'fed':'FedWordCloud','ecb':'EcbWordCloud','boe':'BoeWordCloud'}
-        self.last_date_for_word_cloud_filepath='../wordcloud/last_update_date_for_wordcloud.xlsx'
-        self.last_date_data=pd.read_excel(self.last_date_for_word_cloud_filepath)
-        self.last_date=self.last_date_data.date.iloc[self.bank_dict[self.bank]]
-        self.last_date_update_data=pd.read_excel(path)
-        self.last_date_to_update=self.last_date_update_data['date'].iloc[0]
-        print(self.last_date_to_update)
+        self.path = path
+
+        self.bank = bank
+        self.bank_dict = {'fed':0,'ecb':1,'boe':2}
+        self.folder_dict = {'fed':'FedWordCloud','ecb':'EcbWordCloud','boe':'BoeWordCloud'}
+        self.last_date_for_word_cloud_filepath = '../wordcloud/last_update_date_for_wordcloud.xlsx'
 
 
 
@@ -75,24 +71,40 @@ class Word_cloud_generation:
 
                                          """
         try:
+            logfile_obj = Log_Exception()
+            self.logger = logfile_obj.save_exception()
+
+            self.data = pd.read_excel(self.path)
+            self.data['date'] = self.data['date'].dt.date
+            self.last_date_data = pd.read_excel(self.last_date_for_word_cloud_filepath)
+
+            self.last_date_update_data = pd.read_excel(self.path)
+
+            if 'date' not in self.last_date_data.columns:
+                self.logger.error("The 'date' column is missing in last_date_update_data dataframe in word_cloud method in word_cloud.py file")
+            self.last_date = self.last_date_data.date.iloc[self.bank_dict[self.bank]]
+            self.last_date_to_update = self.last_date_update_data['date'].iloc[0]
+            # print(self.last_date_to_update)
 
             stopwords = set(STOPWORDS)
 
             for date,summary,speaker in zip(self.data['date'],self.data['quotes'],self.data['speaker']):
-                if date>self.last_date:
+                if date > self.last_date:
 
 
                     # text = "".join(review for review in self.data.Summary.iloc[i])
                     # print(text)
+
                     try:
 
-                    # Generate the image
+                        # Generate the image
                         wordcloud = WordCloud(font_path='./arial.ttf', stopwords=stopwords, color_func=self.color_func,
                                               background_color="black", max_words=100, max_font_size=60, min_word_length=5,
                                               width=1080, height=607, colormap='Dark2').generate(summary)
-                    except Exception as e:
-                        print(e)
+                    except TypeError as err:
+                        self.logger.error(f'TypeError: This error due to nan value in quotes column due to which it could not generate wordcloud!{err}')
                         pass
+
                     # print(len(wordcloud.words_))
                     # date = fed_data.date.iloc[i]
                     # speaker = fed_data.speaker_name.iloc[i]
@@ -115,8 +127,12 @@ class Word_cloud_generation:
 
             # Write the DataFrame to the Excel file
             self.last_date_data.to_excel(self.last_date_for_word_cloud_filepath, encoding='ascii', index=False)
-        except Exception as e:
-            print(e)
+        except FileNotFoundError  as err:
+            self.logger.error(f'FileNotFoundError: : Unable find file to read in word_cloud method in word_cloud.py {err}')
 
+        except KeyError as err:
+            self.logger.error(f'KeyError: :  one or more of the specified keys ("date", "quotes", or "speaker") do not exist in the self.data dictionary in word_cloud method in word_cloud.py {err}')
 
+        except ValueError as err:
+            self.logger.error(f'ValueError: : An error occurred when creating the word cloud in word_cloud method in word_cloud.py {err}')
 

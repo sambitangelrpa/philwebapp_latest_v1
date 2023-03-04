@@ -1,17 +1,14 @@
-from common.run_selenium import Selenium_Run
+
 import pandas as pd
 import time
 from selenium.webdriver.support import expected_conditions as EC
 from common.run_selenium import Selenium_Run
-from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-import requests
-import os
-import pypdfium2 as pdfium
-import numpy as np
+from log_exception.log_exception import Log_Exception
+from selenium.common.exceptions import InvalidSelectorException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException,ElementNotInteractableException
+
 
 class Ecb_PDF_Scraping:
     """
@@ -46,11 +43,12 @@ class Ecb_PDF_Scraping:
 
         """
         try:
+            logfile_obj = Log_Exception()
+            self.logger = logfile_obj.save_exception()
 
             existed_pdf_data = pd.read_excel(self.filename)
 
             existed_pdf_data['date'] = pd.to_datetime(existed_pdf_data['date'], format='%d %B %Y')
-
             df = pd.DataFrame(columns=["date", "link", "title"])
 
             # action = ActionChains(self.driver)
@@ -82,8 +80,24 @@ class Ecb_PDF_Scraping:
 
             # Write the DataFrame to the Excel file
             existed_pdf_data.to_excel(self.filename,encoding='ascii',index=False)
-        except Exception as e:
-            print(e)
+        except FileNotFoundError as err:
+            self.logger.error(f'FileNotFoundError: :  {self.filename} not found {err} In pdf_link_scrape method Ecb_PDF_Link_scraping.py file.')
+        except ValueError as err:
+            self.logger.error(f'ValueError: : Format specified in the pd.to_datetime() method does not match the date format in the data In pdf_link_scrape method Ecb_PDF_Link_scraping.py file.')
+        except TimeoutException as err:
+            self.logger.error(f'TimeoutException: : In pdf_link_scrape method unable to fetch webelement in selenium '
+                              f'for European Central Bank in Ecb_PDF_Link_scraping.py. {err}')
+        except NoSuchElementException as err:
+            self.logger.error(f'NoSuchElementException: : In pdf_link_scrape method unable to fetch webelement in selenium '
+                              f'for European Central Bank in Ecb_PDF_Link_scraping.py. {err}')
+        except TypeError as err:
+            self.logger.error(
+                f'TypeError: : The data types of the columns in the DataFrame are not compatible or if there is a type mismatch in the program In pdf_link_scrape method unable to fetch webelement in selenium '
+                f'for European Central Bank in Ecb_PDF_Link_scraping.py. {err}')
+        except PermissionError as err:
+            self.logger.error(f'PermissionError: : Unable to write the DataFrame to the Excel file due to permission error! in Ecb_PDF_Link_scraping.py {err}')
+        except pd.errors.MergeError as err:
+            self.logger.error(f"An error occurred while merging the DataFrames in summary_prediction method in Ecb_PDF_Link_scraping.py {err}")
 
 
 if __name__=='__main__':
